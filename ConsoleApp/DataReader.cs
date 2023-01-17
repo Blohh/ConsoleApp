@@ -15,6 +15,7 @@
         {
             ImportedObjects = new List<ImportedObject>() { new ImportedObject() };
 
+
             var streamReader = new StreamReader(fileToImport);
 
             var importedLines = new List<string>();
@@ -24,11 +25,15 @@
                 importedLines.Add(line);
             }
 
-            for (int i = 0; i <= importedLines.Count; i++)
+            for (int i = 1; i < importedLines.Count; i++)
             {
                 var importedLine = importedLines[i];
                 var values = importedLine.Split(';');
                 var importedObject = new ImportedObject();
+                if(values.Length != 7)
+                {
+                    continue;
+                }
                 importedObject.Type = values[0];
                 importedObject.Name = values[1];
                 importedObject.Schema = values[2];
@@ -38,10 +43,11 @@
                 importedObject.IsNullable = values[6];
                 ((List<ImportedObject>)ImportedObjects).Add(importedObject);
             }
-
+            ((List<ImportedObject>)ImportedObjects).RemoveAt(0); // removing empty element
             // clear and correct imported data
             foreach (var importedObject in ImportedObjects)
             {
+                if (importedObject.Type == null) continue;
                 importedObject.Type = importedObject.Type.Trim().Replace(" ", "").Replace(Environment.NewLine, "").ToUpper();
                 importedObject.Name = importedObject.Name.Trim().Replace(" ", "").Replace(Environment.NewLine, "");
                 importedObject.Schema = importedObject.Schema.Trim().Replace(" ", "").Replace(Environment.NewLine, "");
@@ -74,6 +80,7 @@
                     // print all database's tables
                     foreach (var table in ImportedObjects)
                     {
+                        if (table.ParentType == null) continue;
                         if (table.ParentType.ToUpper() == database.Type)
                         {
                             if (table.ParentName == database.Name)
@@ -83,6 +90,7 @@
                                 // print all table's columns
                                 foreach (var column in ImportedObjects)
                                 {
+                                    if(column.ParentType == null) continue;
                                     if (column.ParentType.ToUpper() == table.Type)
                                     {
                                         if (column.ParentName == table.Name)
@@ -103,23 +111,17 @@
 
     class ImportedObject : ImportedObjectBaseClass
     {
-        public string Name
-        {
-            get;
-            set;
-        }
-        public string Schema;
+        public new string Type { get; set; }
+        public new string Name { get; set; }
+        public string Schema { get; set; }
 
-        public string ParentName;
-        public string ParentType
-        {
-            get; set;
-        }
+        public string ParentName { get; set; }
+        public string ParentType { get; set; }
 
         public string DataType { get; set; }
         public string IsNullable { get; set; }
 
-        public double NumberOfChildren;
+        public double NumberOfChildren { get; set; }
     }
 
     class ImportedObjectBaseClass
